@@ -22,4 +22,18 @@ class UserRepository
 
         return $stmt->fetch();
     }
+    public function create(array $data)
+    {
+        $stmt = $this->db->prepare("
+            INSERT INTO users (email, password)
+            VALUES (:email, :password)
+        ");
+
+        $stmt->execute([
+            ':email' => $data['email'],
+            ':password' => password_hash($data['password'], PASSWORD_DEFAULT)
+        ]);
+
+        return $this->db->lastInsertId();
+    }
 }
