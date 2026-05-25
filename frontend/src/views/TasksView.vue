@@ -1,245 +1,136 @@
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { onMounted, nextTick, ref } from 'vue'
 
 import { useTasks } from '../composables/useTasks'
+import { useTaskForm } from '../composables/useTaskForm'
+import { useToast } from '../composables/useToast'
 
+import TaskForm from '../components/TaskForm.vue'
+import TaskList from '../components/TaskList.vue'
+import TaskEditForm from '../components/TaskEditForm.vue'
+import Toast from '../components/Toast.vue'
+
+/* -----------------------------
+   TASK LOGIC
+------------------------------*/
 const {
   tasks,
   fetchTasks,
-  createTask,
-  updateTask,
-  editingTask,
   deleteTask,
-  startEdit
+  startEdit,
+  editingTask,
+  createTask,
+  updateTask
 } = useTasks()
 
-const name = ref('')
-const due_date = ref('')
-const description = ref('')
-const statusFilter = ref('')
-const errors = ref({
-  name: '',
-  due_date: '',
-})
+/* -----------------------------
+   FORM STATE
+------------------------------*/
+const { form, resetForm, setErrors } = useTaskForm()
 
+/* -----------------------------
+   TOAST
+------------------------------*/
+const { toast, showToast } = useToast()
+
+/* -----------------------------
+   REFS
+------------------------------*/
+const editFormRef = ref(null)
+
+/* -----------------------------
+   INIT
+------------------------------*/
 onMounted(() => {
   fetchTasks()
 })
 
+/* -----------------------------
+   CREATE TASK
+------------------------------*/
+const handleCreate = async () => {
+  const result = await createTask({
+    name: form.name,
+    due_date: form.due_date,
+    description: form.description,
+    status: 'active'
+  })
 
-const editFormRef = ref(null)
+  /*if (setErrors) {
+    form.setErrors(setErrors)
+    return
+  }
 
+  resetForm()*/
+  showToast('Task added successfully', 'success')
+}
+
+/* -----------------------------
+   EDIT TASK
+------------------------------*/
 const handleEdit = async (task) => {
   startEdit(task)
 
   await nextTick()
-
-  editFormRef.value?.scrollIntoView({
-    behavior: 'smooth',
-    block: 'start'
-  })
-}
-const handleCreate = async () => {
-
-  if (!validateForm()) return
-
-  await createTask({
-    name: name.value,
-    due_date: due_date.value,
-    description: description.value,
-    status: 'active'
-  })
-
-  name.value = ''
-  due_date.value = ''
-  description.value = ''
-  errors.value.name = ''
-  errors.value.due_date = ''
-}
-const validateForm = () => {
-  let isValid = true
-
-  errors.value.name = ''
-  errors.value.due_date = ''
-
-  if (!name.value.trim()) {
-    errors.value.name = 'Task name is required'
-    isValid = false
-  }
-
-  if (!due_date.value) {
-    errors.value.due_date = 'Due date is required'
-    isValid = false
-  }
-
-  return isValid
+  editFormRef.value?.scrollIntoView({ behavior: 'smooth' })
 }
 
-const filterTasks = async () => {
-  await fetchTasks(statusFilter.value)
+/* -----------------------------
+   UPDATE TASK
+------------------------------*/
+const handleUpdate = async () => {
+  const result = await updateTask(editingTask.value)
+
+  if (!result.isValid) return
+
+  showToast('Task updated successfully', 'success')
+}
+
+/* -----------------------------
+   DELETE TASK
+------------------------------*/
+const handleDelete = async (id) => {
+  await deleteTask(id)
+  showToast('Task deleted successfully', 'success')
 }
 </script>
 
 <template>
-
   <div class="max-w-4xl mx-auto p-8">
 
+    <!-- TOAST -->
+    <Toast :toast="toast" />
+
+    <!-- HEADER -->
     <div class="flex items-center justify-between mb-8">
-
-      <h1 class="text-3xl font-bold">
-        Tasks
-      </h1>
-
-      <select
-        v-model="statusFilter"
-        @change="filterTasks"
-        class="border p-2 rounded"
-      >
-        <option value="">All</option>
-        <option value="active">Active</option>
-        <option value="completed">Completed</option>
-      </select>
-
+      <h1 class="text-3xl font-bold">Tasks</h1>
     </div>
 
+    <!-- CREATE FORM -->
     <div class="bg-white p-6 rounded-xl shadow mb-8">
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="flex flex-col">
-            <input
-            v-model="name"
-            placeholder="Task name"
-            class="border p-3 rounded"
-            />
-            <p v-if="errors.name" class="text-red-500 text-sm mt-1">
-                {{ errors.name }}
-            </p>
-        </div>
-        <div class="flex flex-col">
-            <input
-            v-model="due_date"
-            type="date"
-            class="border p-3 rounded"
-            />
-            <p v-if="errors.due_date" class="text-red-500 text-sm mt-1">
-                {{ errors.due_date }}
-            </p>
-        </div>
-        <textarea
-            v-model="description"
-            placeholder="Task description"
-            class="border p-3 rounded md:col-span-3"
-            rows="4"
-        ></textarea>
-
-        <button
-          @click="handleCreate"
-          class="bg-gray-500 text-white rounded px-4 py-3 md:col-span-1"
-        >
-          Add Task
-        </button>
-
-      </div>
-
-    </div>
-
-    <div v-if="editingTask" ref="editFormRef" class="bg-slate-50 p-6 rounded-xl shadow mb-6">
-
-        <h2 class="text-xl font-bold mb-4">Edit Task</h2>
-
-        <input
-            v-model="editingTask.name"
-            class="border p-2 w-full mb-2"
-            placeholder="Task name"
+      <TaskForm
+        :form="form"
+        :errors="form.errors"
+        :onSubmit="handleCreate"
         />
-
-        <input
-            v-model="editingTask.due_date"
-            type="date"
-            class="border p-2 w-full mb-2"
-        />
-        <textarea
-            v-model="editingTask.description"
-            class="border p-2 w-full mb-2"
-            placeholder="Task description"
-            rows="4"
-        ></textarea>
-        <select v-model="editingTask.status" class="border p-2 w-full mb-4">
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-        </select>
-
-        <div class="flex gap-2">
-
-            <button
-            @click="updateTask(editingTask)"
-            class="bg-green-600 text-white px-4 py-2 rounded"
-            >
-            Save
-            </button>
-
-            <button
-            @click="editingTask = null"
-            class="bg-gray-400 text-white px-4 py-2 rounded"
-            >
-            Cancel
-            </button>
-
-        </div>
-
     </div>
 
-    <div class="space-y-4">
-        <div
-            v-for="task in tasks"
-            :key="task.id"
-            class="bg-white p-5 rounded-xl shadow flex justify-between items-center"
-        >
-            <div>
-
-                <h2 class="font-semibold text-lg">
-                {{ task.name }}
-                </h2>
-
-                <p class="text-sm text-gray-500">
-                Due: {{ task.due_date }}
-                </p>
-                <p class="text-sm text-gray-500">
-                    Description: {{ task.description }}
-                </p>
-                <span
-                class="inline-block mt-2 text-xs px-3 py-1 rounded-full"
-                :class="task.status === 'completed'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-yellow-100 text-yellow-700'"
-                >
-                {{ task.status }}
-                </span>
-
-            </div>
-
-            <div class="flex items-center gap-3">
-
-                <button
-                @click="handleEdit(task)"
-                class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition duration-200"
-                >
-                Edit
-                </button>
-
-                <button
-                @click="deleteTask(task.id)"
-                class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition duration-200"
-                >
-                Delete
-                </button>
-
-            </div>
-
-        </div>
-
+    <!-- EDIT FORM -->
+    <div ref="editFormRef">
+      <TaskEditForm
+        v-if="editingTask"
+        :task="editingTask"
+        :onSave="handleUpdate"
+        :onCancel="() => (editingTask = null)"
+      />
     </div>
+
+    <!-- TASK LIST -->
+    <TaskList
+      :tasks="tasks"
+      :onEdit="handleEdit"
+      :onDelete="handleDelete"
+    />
 
   </div>
-
 </template>
