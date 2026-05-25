@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
-
 import { useTasks } from '../composables/useTasks'
 
 const {
@@ -17,18 +16,109 @@ const name = ref('')
 const due_date = ref('')
 const description = ref('')
 const statusFilter = ref('')
+
 const errors = ref({
   name: '',
-  due_date: '',
+  due_date: ''
 })
+
+const editErrors = ref({
+  name: '',
+  due_date: ''
+})
+
+const successMessage = ref('')
+const errorMessage = ref('')
 
 onMounted(() => {
   fetchTasks()
 })
 
-
 const editFormRef = ref(null)
 
+/* -------------------------
+   VALIDATION CORE
+--------------------------*/
+const validateTask = (task) => {
+  const errors = {
+    name: '',
+    due_date: ''
+  }
+
+  let isValid = true
+
+  if (!task.name?.trim()) {
+    errors.name = 'Task name is required'
+    isValid = false
+  }
+
+  if (!task.due_date) {
+    errors.due_date = 'Due date is required'
+    isValid = false
+  }
+
+  return { isValid, errors }
+}
+
+/* -------------------------
+   CREATE VALIDATION
+--------------------------*/
+const validateCreateForm = () => {
+  const result = validateTask({
+    name: name.value,
+    due_date: due_date.value
+  })
+
+  errors.value = result.errors
+  return result.isValid
+}
+
+/* -------------------------
+   UPDATE VALIDATION
+--------------------------*/
+const validateUpdateForm = () => {
+  const result = validateTask(editingTask.value)
+  editErrors.value = result.errors
+  return result.isValid
+}
+
+/* -------------------------
+   MESSAGES
+--------------------------*/
+const clearMessages = () => {
+  setTimeout(() => {
+    successMessage.value = ''
+    errorMessage.value = ''
+  }, 3000)
+}
+
+/* -------------------------
+   CREATE TASK
+--------------------------*/
+const handleCreate = async () => {
+  if (!validateCreateForm()) return
+
+  await createTask({
+    name: name.value,
+    due_date: due_date.value,
+    description: description.value,
+    status: 'active'
+  })
+
+  successMessage.value = 'Task added successfully'
+
+  name.value = ''
+  due_date.value = ''
+  description.value = ''
+
+  errors.value = { name: '', due_date: '' }
+
+  clearMessages()
+}
+
+/* -------------------------
+   EDIT TASK
+--------------------------*/
 const handleEdit = async (task) => {
   startEdit(task)
 
@@ -39,56 +129,47 @@ const handleEdit = async (task) => {
     block: 'start'
   })
 }
-const handleCreate = async () => {
 
-  if (!validateForm()) return
+/* -------------------------
+   UPDATE TASK
+--------------------------*/
+const handleUpdate = async () => {
+  if (!validateUpdateForm()) return
 
-  await createTask({
-    name: name.value,
-    due_date: due_date.value,
-    description: description.value,
-    status: 'active'
-  })
+  await updateTask(editingTask.value)
 
-  name.value = ''
-  due_date.value = ''
-  description.value = ''
-  errors.value.name = ''
-  errors.value.due_date = ''
-}
-const validateForm = () => {
-  let isValid = true
+  successMessage.value = 'Task updated successfully'
 
-  errors.value.name = ''
-  errors.value.due_date = ''
+  editErrors.value = { name: '', due_date: '' }
 
-  if (!name.value.trim()) {
-    errors.value.name = 'Task name is required'
-    isValid = false
-  }
+  editingTask.value = null
 
-  if (!due_date.value) {
-    errors.value.due_date = 'Due date is required'
-    isValid = false
-  }
-
-  return isValid
+  clearMessages()
 }
 
+/* -------------------------
+   FILTER
+--------------------------*/
 const filterTasks = async () => {
   await fetchTasks(statusFilter.value)
 }
 </script>
 
 <template>
-
   <div class="max-w-4xl mx-auto p-8">
 
-    <div class="flex items-center justify-between mb-8">
+    <!-- SUCCESS / ERROR MESSAGES -->
+    <div v-if="successMessage" class="bg-green-100 text-green-700 p-3 rounded mb-4">
+      {{ successMessage }}
+    </div>
 
-      <h1 class="text-3xl font-bold">
-        Tasks
-      </h1>
+    <div v-if="errorMessage" class="bg-red-100 text-red-700 p-3 rounded mb-4">
+      {{ errorMessage }}
+    </div>
+
+    <!-- HEADER -->
+    <div class="flex items-center justify-between mb-8">
+      <h1 class="text-3xl font-bold">Tasks</h1>
 
       <select
         v-model="statusFilter"
@@ -99,37 +180,39 @@ const filterTasks = async () => {
         <option value="active">Active</option>
         <option value="completed">Completed</option>
       </select>
-
     </div>
 
+    <!-- CREATE FORM -->
     <div class="bg-white p-6 rounded-xl shadow mb-8">
-
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
         <div class="flex flex-col">
-            <input
+          <input
             v-model="name"
             placeholder="Task name"
             class="border p-3 rounded"
-            />
-            <p v-if="errors.name" class="text-red-500 text-sm mt-1">
-                {{ errors.name }}
-            </p>
+          />
+          <p v-if="errors.name" class="text-red-500 text-sm mt-1">
+            {{ errors.name }}
+          </p>
         </div>
+
         <div class="flex flex-col">
-            <input
+          <input
             v-model="due_date"
             type="date"
             class="border p-3 rounded"
-            />
-            <p v-if="errors.due_date" class="text-red-500 text-sm mt-1">
-                {{ errors.due_date }}
-            </p>
+          />
+          <p v-if="errors.due_date" class="text-red-500 text-sm mt-1">
+            {{ errors.due_date }}
+          </p>
         </div>
+
         <textarea
-            v-model="description"
-            placeholder="Task description"
-            class="border p-3 rounded md:col-span-3"
-            rows="4"
+          v-model="description"
+          placeholder="Task description"
+          class="border p-3 rounded md:col-span-3"
+          rows="4"
         ></textarea>
 
         <button
@@ -140,106 +223,111 @@ const filterTasks = async () => {
         </button>
 
       </div>
-
     </div>
 
-    <div v-if="editingTask" ref="editFormRef" class="bg-slate-50 p-6 rounded-xl shadow mb-6">
+    <!-- EDIT FORM -->
+    <div
+      v-if="editingTask"
+      ref="editFormRef"
+      class="bg-slate-50 p-6 rounded-xl shadow mb-6"
+    >
+      <h2 class="text-xl font-bold mb-4">Edit Task</h2>
 
-        <h2 class="text-xl font-bold mb-4">Edit Task</h2>
+      <input
+        v-model="editingTask.name"
+        class="border p-2 w-full mb-1"
+        placeholder="Task name"
+      />
+      <p v-if="editErrors.name" class="text-red-500 text-sm mb-2">
+        {{ editErrors.name }}
+      </p>
 
-        <input
-            v-model="editingTask.name"
-            class="border p-2 w-full mb-2"
-            placeholder="Task name"
-        />
+      <input
+        v-model="editingTask.due_date"
+        type="date"
+        class="border p-2 w-full mb-1"
+      />
+      <p v-if="editErrors.due_date" class="text-red-500 text-sm mb-2">
+        {{ editErrors.due_date }}
+      </p>
 
-        <input
-            v-model="editingTask.due_date"
-            type="date"
-            class="border p-2 w-full mb-2"
-        />
-        <textarea
-            v-model="editingTask.description"
-            class="border p-2 w-full mb-2"
-            placeholder="Task description"
-            rows="4"
-        ></textarea>
-        <select v-model="editingTask.status" class="border p-2 w-full mb-4">
-            <option value="active">Active</option>
-            <option value="completed">Completed</option>
-        </select>
+      <textarea
+        v-model="editingTask.description"
+        class="border p-2 w-full mb-2"
+        placeholder="Task description"
+        rows="4"
+      ></textarea>
 
-        <div class="flex gap-2">
+      <select
+        v-model="editingTask.status"
+        class="border p-2 w-full mb-4"
+      >
+        <option value="active">Active</option>
+        <option value="completed">Completed</option>
+      </select>
 
-            <button
-            @click="updateTask(editingTask)"
-            class="bg-green-600 text-white px-4 py-2 rounded"
-            >
-            Save
-            </button>
-
-            <button
-            @click="editingTask = null"
-            class="bg-gray-400 text-white px-4 py-2 rounded"
-            >
-            Cancel
-            </button>
-
-        </div>
-
-    </div>
-
-    <div class="space-y-4">
-        <div
-            v-for="task in tasks"
-            :key="task.id"
-            class="bg-white p-5 rounded-xl shadow flex justify-between items-center"
+      <div class="flex gap-2">
+        <button
+          @click="handleUpdate"
+          class="bg-green-600 text-white px-4 py-2 rounded"
         >
-            <div>
+          Save
+        </button>
 
-                <h2 class="font-semibold text-lg">
-                {{ task.name }}
-                </h2>
+        <button
+          @click="editingTask = null"
+          class="bg-gray-400 text-white px-4 py-2 rounded"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
 
-                <p class="text-sm text-gray-500">
-                Due: {{ task.due_date }}
-                </p>
-                <p class="text-sm text-gray-500">
-                    Description: {{ task.description }}
-                </p>
-                <span
-                class="inline-block mt-2 text-xs px-3 py-1 rounded-full"
-                :class="task.status === 'completed'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-yellow-100 text-yellow-700'"
-                >
-                {{ task.status }}
-                </span>
+    <!-- TASK LIST -->
+    <div class="space-y-4">
+      <div
+        v-for="task in tasks"
+        :key="task.id"
+        class="bg-white p-5 rounded-xl shadow flex justify-between items-center"
+      >
+        <div>
+          <h2 class="font-semibold text-lg">{{ task.name }}</h2>
 
-            </div>
+          <p class="text-sm text-gray-500">
+            Due: {{ task.due_date }}
+          </p>
 
-            <div class="flex items-center gap-3">
+          <p class="text-sm text-gray-500">
+            Description: {{ task.description }}
+          </p>
 
-                <button
-                @click="handleEdit(task)"
-                class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition duration-200"
-                >
-                Edit
-                </button>
-
-                <button
-                @click="deleteTask(task.id)"
-                class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition duration-200"
-                >
-                Delete
-                </button>
-
-            </div>
-
+          <span
+            class="inline-block mt-2 text-xs px-3 py-1 rounded-full"
+            :class="task.status === 'completed'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-yellow-100 text-yellow-700'"
+          >
+            {{ task.status }}
+          </span>
         </div>
 
+        <div class="flex items-center gap-3">
+          <button
+            @click="handleEdit(task)"
+            class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg"
+          >
+            Edit
+          </button>
+
+          <button
+            @click="deleteTask(task.id)"
+            class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
     </div>
 
   </div>
-
 </template>

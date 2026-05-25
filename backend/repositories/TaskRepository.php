@@ -39,13 +39,14 @@ class TaskRepository
     public function create(array $data, int $userId)
     {
         $stmt = $this->db->prepare("
-            INSERT INTO tasks (user_id, name, due_date, status)
-            VALUES (:user_id, :name, :due_date, :status)
+            INSERT INTO tasks (user_id, name, description, due_date, status)
+            VALUES (:user_id, :name, :description, :due_date, :status)
         ");
 
         $stmt->execute([
             ':user_id' => $userId,
             ':name' => $data['name'],
+            ':description' => $data['description'],
             ':due_date' => $data['due_date'],
             ':status' => $data['status'] ?? 'active'
         ]);
@@ -59,6 +60,7 @@ class TaskRepository
             UPDATE tasks
             SET
                 name = :name,
+                description = :description,
                 due_date = :due_date,
                 status = :status
             WHERE id = :id
@@ -69,6 +71,7 @@ class TaskRepository
             ':id' => $taskId,
             ':user_id' => $userId,
             ':name' => $data['name'],
+            ':description' => $data['description'],
             ':due_date' => $data['due_date'],
             ':status' => $data['status']
         ]);
