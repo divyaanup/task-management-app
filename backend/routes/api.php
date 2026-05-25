@@ -7,6 +7,9 @@ require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 $method = $_SERVER['REQUEST_METHOD'];
 
 $path = $_GET['path'] ?? '';
+if ($path === 'register' && $method === 'POST') {
+    AuthController::register();
+}
 
 if ($path === 'login' && $method === 'POST') {
     AuthController::login();

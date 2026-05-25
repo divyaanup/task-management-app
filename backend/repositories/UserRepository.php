@@ -25,13 +25,14 @@ class UserRepository
     public function create(array $data)
     {
         $stmt = $this->db->prepare("
-            INSERT INTO users (email, password)
-            VALUES (:email, :password)
+            INSERT INTO users (name, email, password)
+            VALUES (:name, :email, :password)
         ");
 
         $stmt->execute([
+            ':name' => $data['name'],
             ':email' => $data['email'],
-            ':password' => password_hash($data['password'], PASSWORD_DEFAULT)
+            ':password' => $data['password']
         ]);
 
         return $this->db->lastInsertId();
