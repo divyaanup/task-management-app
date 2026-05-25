@@ -21,18 +21,18 @@ if ($path === 'logout' && $method === 'POST') {
 
 $userId = AuthMiddleware::handle();
 
-if ($path === 'tasks' && $method === 'GET') {
+if ($path === 'tasks' && $userId && $method === 'GET') {
     TaskController::index($userId);
 }
 
-if ($path === 'tasks' && $method === 'POST') {
+if ($path === 'tasks' && $userId && $method === 'POST') {
     TaskController::create($userId);
 }
 
-if ($path === 'tasks' && $method === 'PUT') {
+if ($path === 'tasks' && $userId && $method === 'PUT') {
     TaskController::update($userId);
 }
 
-if ($path === 'tasks' && $method === 'DELETE') {
+if ($path === 'tasks' && $userId && $method === 'DELETE') {
     TaskController::delete($userId);
 }

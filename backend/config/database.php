@@ -9,12 +9,12 @@ class Database
     public static function connect(): PDO
     {
         if (self::$instance === null) {
-
-            $host = "127.0.0.1";
-            $db   = "task_manager";
-            $user = "root";
-            $pass = "";
-            $charset = "utf8mb4";
+            $config = require __DIR__ . '/dbconfig.php';
+            $host = $config['db_host'];
+            $db   = $config['db_name'];
+            $user = $config['db_user'];
+            $pass = $config['db_pass'];
+            $charset = $config['db_charset'];
 
             $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 
