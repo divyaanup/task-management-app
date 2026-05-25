@@ -49,7 +49,6 @@ const handleLogin = async () => {
 
   try {
     await login(email.value, password.value)
-
     router.push('/tasks')
 
   } catch (error) {
