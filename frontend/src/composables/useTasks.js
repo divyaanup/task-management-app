@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import api from '../api/axios'
 
 const tasks = ref([])
@@ -40,6 +40,10 @@ export function useTasks() {
     }
 
     const deleteTask = async (id) => {
+
+        const confirmed = window.confirm('Are you sure you want to delete this task?')
+
+        if (!confirmed) return
 
         await api.delete(`/?path=tasks&id=${id}`)
 

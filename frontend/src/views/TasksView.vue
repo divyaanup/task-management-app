@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 
 import { useTasks } from '../composables/useTasks'
 
@@ -7,34 +7,72 @@ const {
   tasks,
   fetchTasks,
   createTask,
-  startEdit,
   updateTask,
   editingTask,
-  deleteTask
+  deleteTask,
+  startEdit
 } = useTasks()
 
 const name = ref('')
 const due_date = ref('')
+const description = ref('')
 const statusFilter = ref('')
+const errors = ref({
+  name: '',
+  due_date: '',
+})
 
 onMounted(() => {
   fetchTasks()
 })
 
+
+const editFormRef = ref(null)
+
+const handleEdit = async (task) => {
+  startEdit(task)
+
+  await nextTick()
+
+  editFormRef.value?.scrollIntoView({
+    behavior: 'smooth',
+    block: 'start'
+  })
+}
 const handleCreate = async () => {
 
-  if (!name.value || !due_date.value) {
-    return
-  }
+  if (!validateForm()) return
 
   await createTask({
     name: name.value,
     due_date: due_date.value,
+    description: description.value,
     status: 'active'
   })
 
   name.value = ''
   due_date.value = ''
+  description.value = ''
+  errors.value.name = ''
+  errors.value.due_date = ''
+}
+const validateForm = () => {
+  let isValid = true
+
+  errors.value.name = ''
+  errors.value.due_date = ''
+
+  if (!name.value.trim()) {
+    errors.value.name = 'Task name is required'
+    isValid = false
+  }
+
+  if (!due_date.value) {
+    errors.value.due_date = 'Due date is required'
+    isValid = false
+  }
+
+  return isValid
 }
 
 const filterTasks = async () => {
@@ -67,22 +105,36 @@ const filterTasks = async () => {
     <div class="bg-white p-6 rounded-xl shadow mb-8">
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-        <input
-          v-model="name"
-          placeholder="Task name"
-          class="border p-3 rounded"
-        />
-
-        <input
-          v-model="due_date"
-          type="date"
-          class="border p-3 rounded"
-        />
+        <div class="flex flex-col">
+            <input
+            v-model="name"
+            placeholder="Task name"
+            class="border p-3 rounded"
+            />
+            <p v-if="errors.name" class="text-red-500 text-sm mt-1">
+                {{ errors.name }}
+            </p>
+        </div>
+        <div class="flex flex-col">
+            <input
+            v-model="due_date"
+            type="date"
+            class="border p-3 rounded"
+            />
+            <p v-if="errors.due_date" class="text-red-500 text-sm mt-1">
+                {{ errors.due_date }}
+            </p>
+        </div>
+        <textarea
+            v-model="description"
+            placeholder="Task description"
+            class="border p-3 rounded md:col-span-3"
+            rows="4"
+        ></textarea>
 
         <button
           @click="handleCreate"
-          class="bg-black text-white rounded px-4"
+          class="bg-gray-500 text-white rounded px-4 py-3 md:col-span-1"
         >
           Add Task
         </button>
@@ -91,7 +143,7 @@ const filterTasks = async () => {
 
     </div>
 
-    <div v-if="editingTask" class="bg-yellow-50 p-6 rounded-xl shadow mb-6">
+    <div v-if="editingTask" ref="editFormRef" class="bg-slate-50 p-6 rounded-xl shadow mb-6">
 
         <h2 class="text-xl font-bold mb-4">Edit Task</h2>
 
@@ -106,7 +158,12 @@ const filterTasks = async () => {
             type="date"
             class="border p-2 w-full mb-2"
         />
-
+        <textarea
+            v-model="editingTask.description"
+            class="border p-2 w-full mb-2"
+            placeholder="Task description"
+            rows="4"
+        ></textarea>
         <select v-model="editingTask.status" class="border p-2 w-full mb-4">
             <option value="active">Active</option>
             <option value="completed">Completed</option>
@@ -147,7 +204,9 @@ const filterTasks = async () => {
                 <p class="text-sm text-gray-500">
                 Due: {{ task.due_date }}
                 </p>
-
+                <p class="text-sm text-gray-500">
+                    Description: {{ task.description }}
+                </p>
                 <span
                 class="inline-block mt-2 text-xs px-3 py-1 rounded-full"
                 :class="task.status === 'completed'
@@ -162,7 +221,7 @@ const filterTasks = async () => {
             <div class="flex items-center gap-3">
 
                 <button
-                @click="startEdit(task)"
+                @click="handleEdit(task)"
                 class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition duration-200"
                 >
                 Edit
