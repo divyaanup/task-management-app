@@ -9,8 +9,8 @@ export function useAuth() {
             email,
             password
         })
-        user.value = res.data.user || true
-        return res.data
+        user.value = res.data.user
+        return user.value
     }
 
     const logout = async () => {

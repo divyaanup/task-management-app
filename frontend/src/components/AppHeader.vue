@@ -4,7 +4,6 @@ import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
 const { user, logout, isLoggedIn } = useAuth()
-
 const handleLogout = async () => {
   await logout()
   router.push('/')
