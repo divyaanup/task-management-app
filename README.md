@@ -104,134 +104,78 @@
             ├── LoginView.vue
             ├── RegisterView.vue
             └── TasksView.vue
-    ```
+```
+   <h2>⚙️ Installation</h2>
 
-    <h2>⚙️ Installation</h2>
+    1. Clone the project
 
-    <h3>1. Clone the project</h3>
+    git clone https://github.com/divyaanup/task-management-app.git
 
-    <pre><code>git clone https://github.com/divyaanup/task-management-app.git</code></pre>
+    2. Backend Setup (PHP)
 
-    <h3>2. Backend Setup (PHP)</h3>
+    - Create database:
 
-    <p>Create database:</p>
+    CREATE DATABASE task_manager;
 
-    <pre><code>CREATE DATABASE task_manager;</code></pre>
+    - Import database.sql
 
-    <p>Import <code>database.sql</code>.</p>
+    - Update database configuration:
 
-    <p>Update database configuration:</p>
-
-    <pre><code>
-return [
-    'host' => '127.0.0.1',
-    'db' => 'task_manager',
-    'user' => 'root',
-    'pass' => '',
-    'charset' => 'utf8mb4',
-];
-    </code></pre>
-    <pre><code>
+    return [
+      'host' => '127.0.0.1',
+      'db' => 'task_manager',
+      'user' => 'root',
+      'pass' => '',
+      'charset' => 'utf8mb4',
+     ];
+  
     cd backend
     php -S localhost:8000
-    </code></pre>
 
-    <h3>3. Frontend Setup</h3>
-
-    <pre><code>
+    3. Frontend Setup
+    
         cd frontend
         npm install
         npm run dev
-    </code></pre>
-  </div>
-  <div>
-    <h3>Test User login Credentials:</h3>
+        
+   Test User login Credentials:
 
-    <p>Email: test@example.com</p>
-    <p>Password: password123</p>
-  </div>
-  <div class="section">
+    Email: test@example.com
+    Password: password123
+
+<div>
     <h2>🔐 Authentication Flow</h2>
+  
+     - PHP uses $_SESSION for authentication
+     - Login creates a server-side session
+     - Vue Router protects routes using navigation guards
+     - Unauthenticated users are redirected to /login
+    
+    Example:
 
-    <ul>
-      <li>PHP uses <code>$_SESSION</code> for authentication</li>
-      <li>Login creates a server-side session</li>
-      <li>Vue Router protects routes using navigation guards</li>
-      <li>Unauthenticated users are redirected to <code>/login</code></li>
-    </ul>
-
-    <p>Example:</p>
-
-    <pre><code>meta: { requiresAuth: true }</code></pre>
-  </div>
-
+    meta: { requiresAuth: true }
+</div>
   <div class="section">
     <h2>🔁 API Endpoints</h2>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Method</th>
-          <th>Endpoint</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr>
-          <td>POST</td>
-          <td>/login</td>
-          <td>User login</td>
-        </tr>
-
-        <tr>
-          <td>POST</td>
-          <td>/logout</td>
-          <td>User logout</td>
-        </tr>
-
-        <tr>
-          <td>POST</td>
-          <td>/register</td>
-          <td>Create account</td>
-        </tr>
-
-        <tr>
-          <td>GET</td>
-          <td>/tasks</td>
-          <td>Fetch tasks</td>
-        </tr>
-
-        <tr>
-          <td>POST</td>
-          <td>/tasks</td>
-          <td>Create task</td>
-        </tr>
-
-        <tr>
-          <td>PUT</td>
-          <td>/tasks/update</td>
-          <td>Update task</td>
-        </tr>
-
-        <tr>
-          <td>DELETE</td>
-          <td>/tasks/delete</td>
-          <td>Delete task</td>
-        </tr>
-      </tbody>
-    </table>
+    | Method | Endpoint        | Description     |
+    |--------|-----------------|-----------------|
+    | POST   | /login          | User login      |
+    | POST   | /logout         | User logout     |
+    | POST   | /register       | Create account  |
+    | GET    | /tasks          | Fetch tasks     |
+    | POST   | /tasks          | Create task     |
+    | PUT    | /tasks/update   | Update task     |
+    | DELETE | /tasks/delete   | Delete task     |
   </div>
-
-  <div>
-    <h2>🧠 Key Concepts Used</h2>
-  <p>
-      Vue 3 Composition API
-      Reactive authentication state
-      PHP PDO prepared statements
-      Session-based authentication
-      Vue Router navigation guards
-      MVC-style backend structure
-    <p>
-  </div>
+  <div class="section">
+  
+  <h2>🧠 Key Concepts Used</h2>
+  
+    - Vue 3 Composition API
+    - Reactive authentication state
+    - PHP PDO prepared statements
+    - Session-based authentication
+    - Vue Router navigation guards
+    - MVC-style backend structure
 </div>
