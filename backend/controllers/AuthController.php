@@ -56,6 +56,7 @@ class AuthController
         $repository = new UserRepository();
 
         $user = $repository->findByEmail($input['email']);
+        // check password match or not
         if (!$user || !password_verify($input['password'], $user['password'])) {
         Response::json([
                 'message' => 'Invalid credentials'
