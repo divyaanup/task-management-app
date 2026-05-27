@@ -20,7 +20,10 @@
    - User registration & login
    - PHP session-based authentication
    - Protected routes in Vue
-   - Create, view, update, and delete tasks
+   - Create, view, update, and delete tasks (CRUD operations)
+   - Task filtering by status
+   - Password hashing using password_hash()
+   - PDO prepared statements for SQL security
    - REST-style PHP API endpoints
    - Router navigation guards
     <h2>🧱 Tech Stack</h2>
